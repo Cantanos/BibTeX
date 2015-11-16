@@ -1,0 +1,461 @@
+% ----------------------------------------------------------------
+% AMS-LaTeX Paper ************************************************
+% **** -----------------------------------------------------------
+\documentclass{llncs}
+\usepackage{graphicx}
+\usepackage[cp1250]{inputenc}
+\usepackage{bm}
+\usepackage{cite}
+\usepackage{multirow}
+\usepackage{mdwlist}
+\usepackage{url}
+
+\begin{document}
+\title{Support Vector Machines Training Data Selection Using a Genetic Algorithm }
+
+\author{Michal Kawulok  \and Jakub Nalepa \thanks{This work has been supported by the Polish Ministry of Science
+and Higher Education under research grant no. IP2011 023071 from the
+Science Budget 2012--2013}}
+
+\authorrunning{M. Kawulok and J. Nalepa}
+
+\institute{Institute of Informatics, Silesian University of
+Technology \\Akademicka 16, 44-100 Gliwice, Poland\\
+\email{\{michal.kawulok, jakub.nalepa\}@polsl.pl}}
+
+\maketitle
+
+\begin{abstract}
+This paper presents a new method for selecting valuable training
+data for support vector machines (SVM) from large, noisy sets using
+a genetic algorithm (GA). SVM training data selection is a known,
+however not extensively investigated problem. The existing methods
+rely mainly on analyzing the geometric properties of the data or
+adapt a randomized selection, and to the best of our knowledge,
+GA-based approaches have not been applied for this purpose yet. Our
+work was inspired by the problems encountered when using SVM for
+skin segmentation. Due to a very large set size, the existing
+methods are too time-consuming, and random selection is not
+effective because of the set noisiness. In the work reported here we
+demonstrate how a GA can be used to optimize the training set, and we
+present extensive experimental results which confirm that the new
+method is highly effective for real-world data.
+\end{abstract}
+
+\section{Introduction}
+Support vector machines (SVM)~\cite{Cortes1995} is a widely adopted
+classifier which has been found highly effective for a variety of
+pattern recognition problems. Based on a labeled training set, it
+determines a hyperplane that linearly separates two classes in a
+higher-dimensional kernel space. The hyperplane is defined by a
+small subset of the vectors from the entire training set, termed
+\emph{support vectors} (SV). Afterwards, the hyperplane is used to
+classify the data of the same dimensionality as the training set
+data.
+
+SVM training is a constrained quadratic programming problem of
+$O(n^3)$ time and $O(n^2)$ memory complexity, where $n$ is the
+number of samples in the training set. This is one of the most
+important shortcomings of SVM, as it makes it virtually inapplicable
+in case of huge amounts of training samples. Therefore, some
+attempts have been made to refine the training sets and use only
+those samples, from which the support vectors are selected. Existing
+techniques are focused either on random selection or analysis of the
+data geometry.
+
+Our contribution lies in using a genetic algorithm (GA) for selecting
+the relevant data from the entire available set of training samples.
+From the work reported here we conclude that in certain cases it is
+better to use only a small portion of the available data for
+training SVM. Moreover, we demonstrate that the data must be
+selected carefully as it has a crucial impact on the obtained
+classification score, and the selection process can be effectively
+managed using a GA. Our work was motivated by the problems related to
+skin detection. SVM have been already used for this
+purpose~\cite{Khan2012}, however training set selection was not
+investigated there. It is worth noting that due to huge amount of
+available training data, proper data selection is very important in
+this case, which was confirmed by obtained experimental results.
+
+The paper is organized as follows. Existing training set reduction techniques are outlined in Section~\ref{sec:review}. The details of proposed method are presented in
+Section~\ref{sec:gasvm}, while the validation results are shown and
+discussed in Section~\ref{sec:exp}. Conclusions and directions for
+our future work are given in Section~\ref{sec:concl}.
+
+\section{Related Literature} \label{sec:review}
+
+Initial approaches towards dealing with large training sets were
+aimed at decomposing the optimization problem into a number of
+sub-problems that can be easily solved, reducing the overall
+training time~\cite{Joachims1999}. However, for very large training
+sets this is insufficient, and the number of training samples must
+be significantly decreased. The simplest method for reducing large
+training sets is to select a smaller subset randomly~\cite{Balcazar2001}. Such an approach was the basis for
+reduced support vector machines (RSVM)~\cite{YJLee2007}. Not only does random
+sampling help reduce the training time, but the
+classification is accelerated as well. This is because the
+classification time is linearly dependent on the number of SV, and generally
+for smaller training sets there are less SV determined.
+
+Random sampling may be extended by analyzing the geometry of the
+training data in the input space. In particular, $k$-means
+clustering
+has been found effective here~\cite{%Almeida2000, Zheng2003,
+Chien2010}. Another approach is to find crisp clusters with safety
+regions~\cite{Koggalage2004}. This method rejects the vectors inside
+single-class clusters, preserving those positioned at clusters'
+boundaries. Recently, the clustering-based approach has also been
+applied for one-class SVM~\cite{YuhuaLi2011}. The entire training set must be processed using these
+methods, which increases the computation time.
+
+In order to achieve better performance, the clustering can be
+performed only in proximity of the decision
+boundary~\cite{Shin2007}. As the boundary is unknown before the SVM
+is trained, it is estimated using heterogeneity analysis based on
+entropy measure. Another approach to estimate the boundary is to
+classify the training data based on their mutual Mahalanobis
+distances and use only the misclassified vectors for
+training~\cite{Abe2001}. Mahalanobis distance-based data clustering
+was also studied in~\cite{DWang2008}. %The distances are computed
+%both in the input and kernel spaces, and 
+The
+points that are closest to the decision boundary are selected from every cluster. This
+process is well-demonstrated %in~\cite{DWang2008} 
+using artificial 2D
+data. Another method that operates in the kernel space rather than
+in the input space, applied to two-teachers-one-student problem was
+recently presented in~\cite{Chang2012}.
+
+There is also a group of methods which use alternative techniques to the
+clustering to analyze the data geometry. In~\cite{JWang2005}
+the convex hulls are determined which embed the training data. Later, the
+vectors are selected using Hausdorff distance between the convex
+hulls of opposite classes. It was presented there that appropriate reduction of the training set makes it possible to achieve almost as good results as using the entire set. In~\cite{Zhang2002} the points from the training set are interpreted as a graph and subject to $\beta$-skeleton algorithm. This makes it possible to reduce both training and testing time while being almost as effective as using the entire training set. Other geometry-based approaches include minimum enclosing ball~\cite{Tsang2005} and smallest enclosing ball with a ring region \cite{Zeng2008}.
+
+Huge training sets can also be reduced using active
+learning techniques~\cite{Schohn2000, Musicant2004}.%, Tong2002, }
+ They operate based on a large unlabeled set, and labels for the
+individual samples are acquired dynamically. According
+to~\cite{Schohn2000}, these algorithms determine the points near the
+decision boundary, similarly to the clustering methods.
+
+The aforementioned methods %All of the methods that address the training data set reduction 
+report similar conclusions. Classification accuracy for reduced training sets is comparable to that obtained using the entire training set. In some of the referenced works it is indicated that the results are slightly better than using random sampling.
+
+\section{Genetic Training Set Optimization} \label{sec:gasvm}
+
+It must be noted that the methods which analyze the data geometry or
+perform clustering need to process the entire training set, and
+therefore their execution time depends on the total number of
+samples. Contrary to these methods, random sampling is applicable
+regardless of the number of available samples, but it is not
+reliable for noisy sets or when the data may be mislabeled. In such
+cases, it is difficult to select ``good'' vectors based on random
+drawing.
+In the work reported here we have successfully solved this problem
+using a GA to select appropriate subset of training
+samples. Our approach is based on the iterative random sampling,
+during which different draws (i.e. \emph{individuals}) are verified,
+and optimal training set is selected using a GA process. %GA is a
+%heuristic optimization strategy which makes it possible to find a
+%solution very close to the optimum by processing multiple
+%generations of individuals defined by their chromosomes. Those who
+%are well-fitted survive and pass their genes to create better
+%individuals.
+This approach combines the advantages of RSVM and
+geometry-based methods.
+
+A GA, firstly introduced by Holland~\cite{Holland1975}, is a heuristic
+search approach inspired by the biological mechanism of evolution
+and natural selection. Encoded solutions belonging to the solution
+space $S$ are called \emph{chromosomes}. The initial population is a subset
+of $N$ chromosomes, and it is successively improved during
+the subsequent \emph{generations}. The chromosomes $p_{A}$ and $p_{B}$ are
+selected and recombined using the crossover operator to generate one
+or more offspring solutions. Selected individuals are mutated with a
+certain probability to avoid premature convergence of the search.
+The quality of each chromosome is assessed by the \emph{fitness
+function} corresponding to the objective function of the problem.
+These with a high fitness survive and form the next generation. %This
+%approach combines the advantages of RSVM and various geometry-based
+%methods.
+
+\subsection{Genetic Operators}\label{sec:ga_process}
+
+For the problem reported here, a chromosome defines the content of a
+single subset from the entire training set $\bm{T}$, which consists
+of labeled samples belonging to two classes $C_{+}$ and $C_{-}$. The
+chromosome's length ($2K$) is equal to the number of samples that
+are used for training after the reduction. The first generation of
+$N$ individuals is created based on random sampling, which is
+illustrated in Fig.~\ref{fig:individual}. From each class, $K$
+vectors are selected randomly to create a new individual $p_i$. This initial selection is independent from the cardinality of $\bm{T}$, which means that the genetic operations are independent from the training set size.
+Afterwards, SVM is trained using $p_i$ and its fitness $\eta(p_i)$
+is determined based on the classification score obtained for the
+validation set $\bm{V}_T$.
+\begin{figure}[t]
+\centering
+
+%\includegraphics[width=0.9\columnwidth]{Figures/ga_individual}
+
+  \caption
+  {
+    Creation and validation of an individual.
+  }
+  \label{fig:individual}
+\end{figure}
+
+A set of individuals from every $i$-\textit{th} generation are used
+for reproduction to create the $(i+1)$-\textit{th} generation. This
+process is similar to generating a new individual. First, two
+individuals $p_{A}$ and $p_{B}$ create an initial training set
+consisting of $4K$ samples, from which $2K$ samples are selected
+randomly as individual $p_{A+B}$. Then, the new individual is
+subject to mutation with the probability $P_m$. It is performed by
+random changes to the training subsets of the individual. Some
+samples are randomly substituted with others from the entire
+training set $\bm{T}$. At every step it is reassured that the
+chromosome contains unique samples, and the same sample cannot be
+selected twice to the same chromosome.
+
+\subsection{Operator Strategies} \label{sec:ga_strat}
+
+The performance of a GA depends on the genetic operators including
+parents selection, crossover and mutation. The selection strategies
+address the problem of choosing two individuals from the population
+for recombination. The offspring solutions inherit the features of
+both parents $p_{A}$ and $p_{B}$, thus the well-adapted individuals
+should be drawn from the population with a larger probability.
+However, recombining only the best individuals may cause saturating
+the population with the chromosomes of similar configurations, which
+in turn leads to the \emph{diversity crisis}~\cite{Corne1999}. Four selection strategies are discussed here, namely: \emph{high-low fit}, \emph{AB-selection}, \emph{truncation} and \emph{enhanced truncation}.
+
+  
+\begin{enumerate}
+\item{\bf{High-low~fit}} -- this selection method was proposed in~\cite{Ali2006}. The population is sorted according to the fitness. The parent $p_{A}$ is selected from the $c_{h}\cdot N$ fittest individuals, where $c_{h}$ is the high-low coefficient. The parent $p_{B}$ is drawn from the less-fitted part of the population. The offspring solutions are appended to the population forming a new population of size $2N$. The $N$ individuals with the highest fitness survive to maintain the constant population size.
+
+\item{\bf{AB-selection}} -- this selection strategy was successfully used in the memetic algorithms to solve the vehicle routing problem with time windows~\cite{Braysy2010, Nalepa2012}. Each individual is selected for reproduction twice: first as $p_{A}$, then as $p_{B}$. If the offspring solution $p_{i}$ generated for a pair of parents has higher fitness than the parent $p_{A}$ then it replaces the parent $p_{A}$.
+\item{\bf{Truncation}}. At first, the population is sorted according to the fitness. Both parents $p_{A}$ and $p_{B}$ are selected from the $c_{t}\cdot N$ fittest individuals, where $c_{t}$ is the truncation coefficient. The new population is composed of the offspring solutions generated for $N$ pairs of parents.
+\item{\bf{Enhanced truncation}}. At first, the population is sorted according to the fitness. The $c_{r}\cdot N$ pairs of parents $p_{A}$ and $p_{B}$ are selected from the $c_{e}\cdot N$ fittest individuals, where $c_{r}$ is the reproduction coefficient and $c_{e}$ is the enhanced truncation coefficient. To maintain the constant population size $N$, the $N-c_{r}\cdot N$ individuals are generated randomly. The randomization simulates additional mutation for the search diversification.
+\end{enumerate}
+
+The individuals of the child population are mutated with a certain
+probability as described in Section~\ref{sec:ga_process}. In case of
+the AB-selection the best individuals will
+survive the recombination. However, they may be mutated and their
+fitness can decrease. Similarly, it is not guaranteed that the best
+chromosomes will survive for the other selection and replacement
+strategies. In order to keep the well-adapted individuals, the
+$c_{c}\cdot N$ best chromosomes replace a set of randomly chosen
+chromosomes with lower fitness, where $c_{c}$ is the restoring
+coefficient.
+
+ The best fitness $\eta(p^{i}_{b})$ and the average fitness $\bar{\eta}(p^{i})$ in subsequent generations determine the necessity of regenerating the population. More formally, if $\eta(p^{i}_{b})-\eta(p^{i-1}_{b}) < \epsilon$ for $s_{b}$ consecutive steps and $\bar{\eta}(p^{i})-\bar{\eta}(p^{i-1}) < \epsilon$ for $s_{a}$ consecutive steps, where $\epsilon$ is the minimal improvement threshold, then the population is regenerated. The regeneration is based on copying $c_{g}\cdot N$ best individuals and drawing $N-c_{g}\cdot N$ individuals randomly, where $c_{g}$ is the regeneration coefficient. The GA finishes after $r$ regenerations.
+
+\section{Experimental Validation} \label{sec:exp}
+
+The proposed method (termed GASVM) has been validated using two data
+sets, namely: 1)~real-world data derived from ECU skin image
+database~\cite{Phung2003}, and 2)~artificial set of 2D points. ECU
+database consists of 4000 images coupled with binary ground-truth
+skin masks. The training set $\bm{T}$ was formed out of 6938255
+pixels from 100 images. Every pixel was represented by a
+three-dimensional vector, indicating its color in $YC_bC_r$. Two
+validation sets were created, namely: $\bm{V}_T$ for evaluating the
+individual's fitness during the GA optimization and $\bm{V}$, which was
+not fed back to the GA process (all the results are presented for
+$\bm{V}$). The validation sets were created by sampling pixels from
+the remaining images. As a result, 560732 pixels were selected to
+every validation set. The sets are available at
+\url{http://sun.aei.polsl.pl/~mkawulok/spr}.
+%SVM is used here to classify every pixel as skin or non-skin based
+%on its color in $YC_bC_r$.
+
+The GA was implemented in C++ and the experiments were performed using
+Intel Core i7 2.3 GHz with 16 GB RAM. We used
+LIBSVM~\cite{ChangLin2011}, which is a popular SVM
+implementation, with RBF kernel: $K \left( \bm{u}, \bm{v} \right) =
+\exp \left( - {\left\| \bm{u} - \bm{v} \right\|^2}/{\sigma^2}
+\right)$, where $\sigma$ is the kernel width. SVM parameters (i.e.
+$\sigma$ and $C$) were selected based on a grid search
+approach~\cite{ChangLin2011} using ranges $0.1\leq\sigma\leq10$ and $0.1\leq C\leq1000$ with a dynamic step. This simple approach was sufficient in the analyzed case and more sophisticated methods~\cite{Staelin2002} were not exploited here. For skin detection we used $\sigma=1$
+and $C=10$, and for 2D points $\sigma=0.26$ and $C=100$. The GA
+parameters were tuned experimentally in a similar manner. The following values were used:
+$N=50$, $P_m=0.3$, $c_{h}=0.5$, $c_{t}=0.5$, $c_{r}=0.9$, $c_{e}=0.2$,
+$c_{c}=0.1$, $c_{g}=0.1$, $\epsilon=10^{-5}$, $s_{a}=s_{b}=r=3$. In
+order to verify performance of RSVM~\cite{YJLee2007}, 20 independent
+tests were performed for every configuration, and within each test
+$N=50$ subsets were drawn and validated to make it comparable to a
+single GA generation. Hence, a total number of 1000 random draws
+were executed to validate each setting. The best result out of each
+test, averaged over all the tests, is referred to as RSVM (best),
+while a global average result -- RSVM (average). Minimal and maximal
+scores for all the draws are presented as RSVM (deviation) in
+Fig.~\ref{fig:res_opt_process} and as error bars for RSVM (best) in
+Fig.~\ref{fig:res_trainsetsize}.
+
+For each GA strategy discussed in Section~\ref{sec:ga_strat}, five
+optimization processes were run. Average maximal fitness obtained in
+subsequent generations for $K=50$ samples in each class is presented
+in Fig.~\ref{fig:res_opt_process} for the skin data. GA strategies
+are compared here with RSVM. It can be seen from the graphs that
+after just a few generations GASVM outperforms RSVM. Enhanced
+truncation offers the fastest improvement, however it is the
+high-low fit strategy which delivers the best final score, and it
+has been chosen for further validation. The premature convergence of
+the search occurs in case of AB-selection strategy and after a
+relatively small number of generations the best individual cannot be
+further improved.
+\begin{figure}[t]
+\centering
+
+\renewcommand{\tabcolsep}{0cm}
+\newcommand{\myfigwidth}{0.315}
+\newcommand{\raiseshift}{0mm}
+
+\begin{tabular}{ll}
+
+\scriptsize a) & \scriptsize b) \\
+%\includegraphics[height=\myfigwidth\columnwidth]{Figures/fig_opt_process_240}&
+%\includegraphics[height=\myfigwidth\columnwidth]{Figures/fig_opt_process_20}
+\\
+
+\end{tabular}
+
+  \caption
+  {
+    Optimization process using different GA strategies compared with
+    random sampling: a) whole process, b) first 20 generations.
+  }
+  \label{fig:res_opt_process}
+\end{figure}
+
+For high-low fit strategy we ran extensive tests to validate
+performance for various number of samples ($K$) in each class of the
+training set. In Fig.~\ref{fig:res_trainsetsize} our method is
+compared with RSVM. Error bars present maximal and minimal value.
+For RSVM (average) the error bars were skipped as RSVM (best)
+indicates the maximal scores, and the minimal scores are irrelevant
+here. In addition, the dependence between the training set size and
+the number of SV is presented. For small value of $K$, GASVM selects
+definitely better training sets than those generated using random
+sampling, and this influences the final classification score. It is
+less dependent on $K$ than RSVM, and the scores achieved in
+different runs are very similar. It is worth to note that the number
+of SV is linearly dependent on $K$, which induces linear
+dependence between $K$ and the classification time. Theoretically,
+it is possible that using random sampling the same set is drawn as
+in case of GASVM, but for huge training sets this is little
+probable and has not been observed during our experiments%. It can be seen from the graphs that 
+ -- the best score achieved using RSVM was
+always worse than the worst obtained after the GA optimization.
+
+For the skin data (Fig.~\ref{fig:res_trainsetsize}a), the best RSVM
+score drops drastically after exceeding a certain threshold (ca.
+$K=1500$), and the score variance increases. GASVM is more stable,
+but the decrease is observed as well. This can be explained by the
+fact that for larger sets it is hard to eliminate noisy data, which
+seriously affects the effectiveness. However, it is still easier to eliminate them
+using GASVM. We have not run GASVM for $K$ greater than 5000 due to
+the required computation time. For $K=5000$ the GA process required
+4800 min to reach the stop condition, but for smaller sets the times were
+definitely shorter (e.g. 80 min for $K=30$ and 210 min for $K=200$). Due to the SVM training complexity it would be virtually impossible to use the entire training set.
+
+Contrary to the skin data, the artificial set of 2D points can be
+classified without any error using the whole set for training, which is possible due to small data set size. For
+smaller $K$, the classification error appears, however it is smaller
+using GASVM. For $K=160$ GASVM eliminated the classification error,
+which has not been achieved using RSVM for $K<320$. The data are
+visualized in Fig.~\ref{fig:res_2D}. Black and white points indicate
+the vectors from the entire set, and those marked with white and
+black crosses show the data selected to the training set (here the
+colors are altered for better visualization). Also, the decision
+boundary is presented. It can be noticed that the selected points do
+not follow any specific geometric pattern as proposed
+in~\cite{DWang2008}. In some cases they are located near the
+decision boundary, but in others they are positioned in the centers
+of the point groups. This can be observed in particular for $K=160$
+in Fig.~\ref{fig:res_2D}d.
+\begin{figure} [t]
+
+
+\renewcommand{\tabcolsep}{0cm}
+\newcommand{\myfigwidth}{0.29}
+\newcommand{\raiseshift}{30mm}
+
+\begin{tabular}{ll}
+
+\scriptsize a) & \scriptsize b) \\
+
+%\raisebox{\raiseshift} {\scriptsize I.}
+
+%\includegraphics[height=\myfigwidth\columnwidth]{Figures/fig_TrainSetSize}
+& %\scriptsize b)
+%\includegraphics[height=\myfigwidth\columnwidth]{Figures/fig_TrainSetSize2D}
+\\
+
+\end{tabular}
+
+  \caption
+  {
+    GA and random sampling results depending on the training set
+    size for skin segmentation set (a) and for artificial 2D data (b).
+  }
+  \label{fig:res_trainsetsize}
+\end{figure}
+
+
+
+\begin{figure}
+\centering
+
+\renewcommand{\tabcolsep}{0cm}
+\newcommand{\myfigwidth}{0.23}
+\newcommand{\raiseshift}{0mm}
+
+\begin{tabular}{llll}
+
+\scriptsize a) RSVM, $\eta=0.882$ & \scriptsize b) RSVM, $\eta=0.883$ & \scriptsize c) GASVM, $\eta=0.985$ & \scriptsize d) GASVM, $\eta=1$\\
+
+%\includegraphics[width=\myfigwidth\columnwidth]{Figures/fig_2D_10_random1} \hspace{0.01\columnwidth}&
+%\includegraphics[width=\myfigwidth\columnwidth]{Figures/fig_2D_10_random2} \hspace{0.01\columnwidth}&
+%\includegraphics[width=\myfigwidth\columnwidth]{Figures/fig_2D_10_GA} \hspace{0.01\columnwidth}&
+%\includegraphics[width=\myfigwidth\columnwidth]{Figures/fig_2D_160_GA}
+\\
+
+\end{tabular}
+
+  \caption
+  {
+    Examples of training set selection using RSVM (a, b) and GASVM (c) for $K=10$ vectors in each class, and GASVM for $K=160$ vectors in each class (d).
+  }
+  \label{fig:res_2D}
+\end{figure}
+
+
+\section{Conclusions and Future Work} \label{sec:concl}
+
+
+In this paper we proposed to use a genetic algorithm for selecting
+SVM training sets. Presented experimental results show that while in
+some cases our method helps reduce the training set size, which
+means shorter training and validation times, it also makes it
+possible to achieve higher classification scores for noisy or mislabeled data. Although the GA process may require many generations
+to converge, it is independent from the total number of available
+samples, which cannot be offered by existing geometry-based
+approaches. Furthermore, after just a few generations it manages to
+select better training sets than those found using random sampling,
+so the optimization process can be terminated earlier, if it is critical to reduce the training time.
+
+Our ongoing research includes comparing GASVM with the geometry-based methods using
+benchmark data sets. This should allow us to design a memetic
+approach, which would combine a GA with the data structure analysis to further improve the classification results.
+Also, our aim is to design a parallel GA to accelerate the computations. Finally, we want to use the method for selecting the
+training data from unlabeled data sets.
+
+
+
+\bibliographystyle{splncs}% bib style
+\bibliography{ref_all}% your bib database
+
+\end{document}
