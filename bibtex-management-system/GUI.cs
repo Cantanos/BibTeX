@@ -109,12 +109,11 @@ namespace bibtex_management_system
         {
             if (ltxInterpreter != null)
             {
-                for (int i = 0; i < ltxInterpreter.getAllBibtexReferences().Count; ++i)
+                foreach (string bibTexReference in ltxInterpreter.getAllBibtexReferences())
                 {
-                    BibTeXRecord rec = bibRecordsReference.getRecordByID(ltxInterpreter.getAllBibtexReferences()[i]);
-                    string aa = ltxInterpreter.getAllBibtexReferences()[i];
-                    bibRecordsCurrent.addRecord(bibRecordsReference.getRecordByID(ltxInterpreter.getAllBibtexReferences()[i]));
-
+                    BibTeXRecord rec = bibRecordsReference.getRecordByID(bibTexReference);
+                    string aa = bibTexReference;
+                    bibRecordsCurrent.addRecord(bibRecordsReference.getRecordByID(bibTexReference));
                 }
             }
             else
@@ -166,8 +165,6 @@ namespace bibtex_management_system
                 gridViewEntryDetail.Rows.Clear(); 
                 gridViewComboBox.Items.Clear();
                 BibTeXRecord record = bibRecordsCurrent.getRecordByID(listViewEntires.SelectedItems[0].Text);
-
-
                 fillDetailedGridView(record);
                 changeStyle();
             }
