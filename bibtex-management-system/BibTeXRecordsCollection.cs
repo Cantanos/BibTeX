@@ -32,7 +32,7 @@ namespace bibtex_management_system
 
         public BibTeXRecord getRecordByID(string id)
         {
-            BibTeXRecord result = new BibTeXRecord();
+            BibTeXRecord result = null;
             foreach (BibTeXRecord e in records)
             {
                 if (id.Equals(e.ID))

@@ -118,7 +118,15 @@ namespace bibtex_management_system
             }
             else
             {
-                bibRecordsCurrent.addRecords(bibInterpreter.getAllBibTeXRecords());
+                foreach (BibTeXRecord tempRecord in bibInterpreter.getAllBibTeXRecords())
+                {
+                    if (bibRecordsCurrent.getRecordByID(tempRecord.ID) != null)
+                    {
+                        MessageBox.Show("Duplicate");
+                    }
+                    bibRecordsCurrent.addRecord(tempRecord);
+                }
+                //bibRecordsCurrent.addRecords(bibInterpreter.getAllBibTeXRecords());
             }
             bibEntryContent.addEntryContent(bibRecordsCurrent);
 
