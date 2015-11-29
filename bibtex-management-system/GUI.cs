@@ -120,9 +120,37 @@ namespace bibtex_management_system
             {
                 foreach (BibTeXRecord tempRecord in bibInterpreter.getAllBibTeXRecords())
                 {
-                    if (bibRecordsCurrent.getRecordByID(tempRecord.ID) != null)
+                    string newID = tempRecord.ID;
+                    if (bibRecordsCurrent.getRecordByID(newID) != null)
                     {
-                        MessageBox.Show("Duplicate");
+                        var dialogResp = MessageBox.Show(
+                            "There exists at least 2 occurences of same ID (" + tempRecord.ID + ")\nDo you want to change it ?",
+                            "Duplicate ID", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                        while (dialogResp == DialogResult.Yes)
+                        {
+
+                            newID = MessageWithEditBox.Show(
+                                "Duplicate ID(" + tempRecord.ID + ")\nDo you want to change it?"
+                                , "Warning", tempRecord.ID);
+                            if (newID == "")
+                            {
+                                MessageBox.Show("ID not changed", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                break;
+                            }
+                            else
+                                if (bibRecordsCurrent.getRecordByID(newID) == null)
+                                {
+                                    tempRecord.ID = newID;
+                                    MessageBox.Show("Changed to (" + newID + ") successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    break;
+                                }
+                                else
+                                {
+                                    dialogResp = MessageBox.Show("This ID (" + newID + ") already exists.\n"
+                                            + "Do you want to try to change it again?", "DuplicateID",
+                                            MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                                }
+                        }
                     }
                     bibRecordsCurrent.addRecord(tempRecord);
                 }
@@ -147,7 +175,7 @@ namespace bibtex_management_system
             }
             else
             {
-                List<BibTeXRecord> tempCollection = bibInterpreter.getAllBibTeXRecords();
+                List<BibTeXRecord> tempCollection = bibRecordsCurrent.getRecords();
                 foreach (BibTeXRecord bibIterator in tempCollection)
                 {
                     listViewEntires.Items.Add(new ListViewItem(bibIterator.ID));
