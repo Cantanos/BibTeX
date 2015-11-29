@@ -132,13 +132,20 @@ namespace bibtex_management_system
         {
             if (ltxInterpreter != null)
             {
-                for (int i = 0; i < ltxInterpreter.getAllBibtexReferences().Count; i++)
-                    listViewEntires.Items.Add(new ListViewItem(ltxInterpreter.getAllBibtexReferences()[i]));
+                List<string> tempCollection = ltxInterpreter.getAllBibtexReferences();
+                foreach (string _ltxIterator in tempCollection)
+                {
+                    listViewEntires.Items.Add(new ListViewItem(_ltxIterator));
+                }
             }
             else
             {
-                for (int i = 0; i < bibInterpreter.getAllBibTeXRecords().Count; i++)
-                    listViewEntires.Items.Add(new ListViewItem(bibInterpreter.getAllBibTeXRecords()[i].ID));
+                List<BibTeXRecord> tempCollection = bibInterpreter.getAllBibTeXRecords();
+                foreach (BibTeXRecord bibIterator in tempCollection)
+                {
+                    listViewEntires.Items.Add(new ListViewItem(bibIterator.ID));
+                }
+                    
             }
         }
 
