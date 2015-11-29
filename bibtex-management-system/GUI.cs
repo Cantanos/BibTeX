@@ -187,8 +187,10 @@ namespace bibtex_management_system
             gridViewEntryDetail.Rows[1].Cells[2].Value = true;
             gridViewEntryDetail.Rows[1].Cells[2].ReadOnly = true;
 
-            for (int i = 0; i < styleCollection.getSize(); i++)
-                gridViewComboBox.Items.Add(styleCollection.Styles[i].Name);
+            foreach (Style tempStyle in styleCollection.Styles)
+            {
+                gridViewComboBox.Items.Add(tempStyle.Name);
+            }
 
             gridViewEntryDetail.Rows[0].Cells[3].Value = gridViewComboBox.Items[0];
             gridViewEntryDetail.Rows[1].Cells[3].Value = gridViewComboBox.Items[0];
@@ -215,14 +217,18 @@ namespace bibtex_management_system
                 BibTeXRecord record = bibRecordsCurrent.getRecordByID(listViewEntires.SelectedItems[0].Text);
                 bool enabled = !record.Enabled[e.RowIndex - 2];
                 bibEntryContent.setEnabled(record.NameOfParameters[e.RowIndex - 2], !bibEntryContent.getEnabled(record.NameOfParameters[e.RowIndex - 2])); //zeby indexowal od zera
-                for (int i = 0; i < bibRecordsCurrent.getRecords().Count; i++)
+                foreach (BibTeXRecord tempBibRecord in bibRecordsCurrent.getRecords())
                 {
-                    for (int j = 0; j < bibRecordsCurrent.getRecords()[i].NameOfParameters.Count; j++)
-                        if (bibRecordsCurrent.getRecords()[i].NameOfParameters[j] == record.NameOfParameters[e.RowIndex - 2])
+                    int j=0;
+                    foreach (string parameterName in tempBibRecord.NameOfParameters)
+                    {
+                        if (parameterName == record.NameOfParameters[e.RowIndex-2])
                         {
-                            bibRecordsCurrent.getRecords()[i].Enabled[j] = enabled;
+                            tempBibRecord.Enabled[j] = enabled;
                             break;
                         }
+                        j++;
+                    }
                 }
             }
         }
@@ -295,10 +301,9 @@ namespace bibtex_management_system
                 {
                     FileManager fileManager = new FileManager();
                     string data = "";
-
-                    for (int i = 0; i < bibRecordsCurrent.getRecords().Count; i++)
+                    foreach (BibTeXRecord bibRecord in bibRecordsCurrent.getRecords())
                     {
-                        data += bibRecordsCurrent.getRecords()[i].toString();
+                        data += bibRecord.toString();
                     }
                     fileManager.saveBibFile(sfd.FileName, data);
 
