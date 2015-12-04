@@ -8,76 +8,54 @@ namespace bibtex_management_system
 {
     class BibTeXEntryContent
     {
-        List<string> content;
-        List<bool> enabled;
-        List<string> styles;
+        Dictionary<string, Content> content;
 
         public BibTeXEntryContent()
         {
-            this.content = new List<string>();
-            this.enabled = new List<bool>();
-            styles = new List<string>();
+            content = new Dictionary<string, Content>();
         }
 
         public void addEntryContent(BibTeXRecordsCollection records)
         {
-            for (int i = 0; i < records.getRecords().Count; i++)
-            {
-                for (int j = 0; j < records.getRecords()[i].NameOfParameters.Count; j++)
-                {
-                    bool repeat = false;
-
-                    for (int z = 0; z < content.Count; z++)
-                    {
-                        if (content[z] == records.getRecords()[i].NameOfParameters[j])
-                        {
-                            repeat = true;
-                            break;
-                        }
-                    }
-                    if (!repeat)
-                        content.Add(records.getRecords()[i].NameOfParameters[j]);
-                }
-
-            }
-
-            for (int i = 0; i < content.Count; i++)
-            {
-                enabled.Add(true);
-                styles.Add("NONE");
-            }
+            foreach (BibTeXRecord record in records.getRecords())
+                foreach (Parameter parameter in record.Parameters.Values)
+                    if(!content.ContainsKey(parameter.Name))
+                        content.Add(parameter.Name, new Content(parameter.Name));
         }
 
         public bool getEnabled(string contentValue)
         {
-            for (int i = 0; i < content.Count; i++)
-                if (content[i] == contentValue)
-                    return enabled[i];
-
+            Content parameter;
+            content.TryGetValue(contentValue, out parameter);
+            if (parameter != null)
+                return parameter.Enabled;
             return false;
         }
 
         public void setEnabled(string contentValue, bool enabled)
         {
-            for (int i = 0; i < content.Count; i++)
-                if (content[i] == contentValue)
-                    this.enabled[i] = enabled;
+            Content parameter;
+            content.TryGetValue(contentValue, out parameter);
+            if (parameter != null)
+                parameter.Enabled = enabled;
         }
 
         public string getStyle(string contentValue)
         {
-            for (int i = 0; i < content.Count; i++)
-                if (content[i] == contentValue)
-                    return styles[i];
+            Content parameter;
+            content.TryGetValue(contentValue, out parameter);
+            if (parameter != null)
+                return parameter.Style;
 
             return "";
         }
 
         public void setStyle(string contentValue, string styleName)
         {
-            for (int i = 0; i < content.Count; i++)
-                if (content[i] == contentValue)
-                    this.styles[i] = styleName;
+            Content parameter;
+            content.TryGetValue(contentValue, out parameter);
+            if (parameter != null)
+                parameter.Style = styleName;
         }
     }
 }
