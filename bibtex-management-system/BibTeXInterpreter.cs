@@ -37,14 +37,9 @@ namespace bibtex_management_system
 
         BibTeXRecord prepareRecord(string toPrepare)
         {
-            BibTeXRecord result = new BibTeXRecord(readNamesOfParametersOfRecord(toPrepare), readValuesOfParametersOfRecord(toPrepare));
+            BibTeXRecord result = new BibTeXRecord(getParameters(toPrepare));
             result.Type = readType(toPrepare);
             result.ID = readID(toPrepare);
-            for (int i = 0; i < result.NameOfParameters.Count; i++)
-            {
-                result.Enabled.Add(true);
-            }
-
             return result;
         }
 
@@ -58,59 +53,45 @@ namespace bibtex_management_system
             return toPrepare.Substring(toPrepare.IndexOf("{") + 1, toPrepare.IndexOf(",") - toPrepare.IndexOf("{") - 1);
         }
 
-        List<string> readNamesOfParametersOfRecord(string toPrepare)
+        List<Parameter> getParameters(string pToPrepare)
         {
-            toPrepare = toPrepare.Substring(toPrepare.IndexOf(",") + 1);
-            List<string> result = new List<string>(toPrepare.Split('\n'));
-
-            for (int i = 0; i < result.Count; ++i)
+            List<Parameter> result = new List<Parameter>();
+            pToPrepare = pToPrepare.Substring(pToPrepare.IndexOf(","), pToPrepare.LastIndexOf("}") - pToPrepare.IndexOf(","));
+            List<string> lines = new List<string>(pToPrepare.Split('\n'));
+            string value = "";
+            bool completed = true;
+            for(int i=0; i<lines.Count; i++)
             {
-                if (!result[i].Contains("="))
+                if (lines[i].Contains("="))
                 {
-                    result.RemoveAt(i);
-                    i--;
-                }
-                else
-                {
-                    result[i] = result[i].Substring(0, result[i].IndexOf('=')).Trim();
+                    if (completed)
+                        value = getValue(lines[i]);
+                    else
+                        value += getValue(lines[i]);
+
+                    if (lines[i].Contains('}'))
+                    {
+                        completed = true;
+                        string name = lines[i].Substring(0, lines[i].IndexOf('=')).Trim();
+                        result.Add(new Parameter(name, value));
+                    }
+                    else
+                        completed = false;
                 }
             }
             return result;
         }
 
-        List<string> readValuesOfParametersOfRecord(string toPrepare)
+        private string getValue(string pParameter)
         {
-            toPrepare = toPrepare.Substring(toPrepare.IndexOf(","), toPrepare.LastIndexOf("}") - toPrepare.IndexOf(","));
-            List<string> result = new List<string>(toPrepare.Split('\n'));
-
-            for (int i = 0; i < result.Count; ++i)
+            if (pParameter.IndexOf('{') == -1 || pParameter.LastIndexOf('}') == -1)
             {
-                result[i] = result[i].Trim().Replace("\r", "");
-                if (!result[i].Contains('=') && !result[i].Contains('}'))
-                {
-                    result.RemoveAt(i);
-                    i--;
-                }
-                else if (!result[i].Contains('=') && result[i].Contains('}'))
-                {
-                    result[i - 1] += result[i];
-                    result.RemoveAt(i);
-                    i--;
-                }
+                return pParameter.Substring(pParameter.IndexOf('=')).Trim();
             }
-            for (int i = 0; i < result.Count; ++i)
+            else
             {
-                if (result[i].IndexOf('{') == -1 || result[i].LastIndexOf('}') == -1)
-                {
-                    result[i].Substring(result[i].IndexOf('=')).Trim();
-                }
-                else
-                {
-                    result[i] = result[i].Substring(result[i].IndexOf('{') + 1, result[i].LastIndexOf('}') - result[i].IndexOf('{') - 1);
-                }
+                return pParameter = pParameter.Substring(pParameter.IndexOf('{') + 1, pParameter.LastIndexOf('}') - pParameter.IndexOf('{') - 1);
             }
-
-            return result;
         }
     }
 }

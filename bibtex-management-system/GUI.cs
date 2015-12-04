@@ -180,7 +180,7 @@ namespace bibtex_management_system
                 {
                     listViewEntires.Items.Add(new ListViewItem(bibIterator.ID));
                 }
-                    
+
             }
         }
 
@@ -198,16 +198,16 @@ namespace bibtex_management_system
         {
             if (listViewEntires.SelectedItems.Count != 0)
             {
-                gridViewEntryDetail.Rows.Clear(); 
+                gridViewEntryDetail.Rows.Clear();
                 gridViewComboBox.Items.Clear();
                 BibTeXRecord record = bibRecordsCurrent.getRecordByID(listViewEntires.SelectedItems[0].Text);
                 fillDetailedGridView(record);
-                changeStyle();
+                changeStyle(true);
             }
         }
-        
 
-        private void fillDetailedGridView(BibTeXRecord record) 
+
+        private void fillDetailedGridView(BibTeXRecord record)
         {
             gridViewEntryDetail.Rows.Add(2);
             gridViewEntryDetail.Rows[0].Cells[0].Value = "Type";
@@ -228,39 +228,38 @@ namespace bibtex_management_system
             gridViewEntryDetail.Rows[0].Cells[3].Value = gridViewComboBox.Items[0];
             gridViewEntryDetail.Rows[1].Cells[3].Value = gridViewComboBox.Items[0];
 
-
-            for (int i = 0; i < record.NameOfParameters.Count; ++i)
+            foreach (Parameter parameter in record.Parameters.Values)
             {
                 gridViewEntryDetail.Rows.Add();
 
-                gridViewEntryDetail.Rows[gridViewEntryDetail.Rows.Count - 1].Cells[0].Value = record.NameOfParameters[i];
-                gridViewEntryDetail.Rows[gridViewEntryDetail.Rows.Count - 1].Cells[1].Value = record.ValueOfParameters[i];
-                gridViewEntryDetail.Rows[gridViewEntryDetail.Rows.Count - 1].Cells[2].Value = bibEntryContent.getEnabled(record.NameOfParameters[i]);
-                gridViewEntryDetail.Rows[gridViewEntryDetail.Rows.Count - 1].Cells[3].Value = gridViewComboBox.Items[styleCollection.getStyleIndex(bibEntryContent.getStyle(record.NameOfParameters[i]))]; //HARDCORE!!
+                gridViewEntryDetail.Rows[gridViewEntryDetail.Rows.Count - 1].Cells[0].Value = parameter.Name;
+                gridViewEntryDetail.Rows[gridViewEntryDetail.Rows.Count - 1].Cells[1].Value = parameter.Value;
+                gridViewEntryDetail.Rows[gridViewEntryDetail.Rows.Count - 1].Cells[2].Value = bibEntryContent.getEnabled(parameter.Name);
+                gridViewEntryDetail.Rows[gridViewEntryDetail.Rows.Count - 1].Cells[3].Value = gridViewComboBox.Items[styleCollection.getStyleIndex(bibEntryContent.getStyle(parameter.Name))]; //HARDCORE!!
             }
         }
 
         private void gridViewCellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            
-            if (e.RowIndex >= 2 && e.ColumnIndex == 2) 
+
+            if (e.RowIndex >= 2 && e.ColumnIndex == 2)
             {
                 DataGridView gridView = sender as DataGridView;
 
                 BibTeXRecord record = bibRecordsCurrent.getRecordByID(listViewEntires.SelectedItems[0].Text);
-                bool enabled = !record.Enabled[e.RowIndex - 2];
-                bibEntryContent.setEnabled(record.NameOfParameters[e.RowIndex - 2], !bibEntryContent.getEnabled(record.NameOfParameters[e.RowIndex - 2])); //zeby indexowal od zera
-                foreach (BibTeXRecord tempBibRecord in bibRecordsCurrent.getRecords())
+                string parameterName = gridView[0, e.RowIndex].Value.ToString();
+                Parameter parameter;
+                if (record.Parameters.TryGetValue(parameterName, out parameter))
                 {
-                    int j=0;
-                    foreach (string parameterName in tempBibRecord.NameOfParameters)
+                    bool enabled = !parameter.Enabled;
+                    bibEntryContent.setEnabled(parameter.Name, !bibEntryContent.getEnabled(parameter.Name));
+                    foreach (BibTeXRecord tempBibRecord in bibRecordsCurrent.getRecords())
                     {
-                        if (parameterName == record.NameOfParameters[e.RowIndex-2])
+                        Parameter param;
+                        if (tempBibRecord.Parameters.TryGetValue(parameter.Name, out param))
                         {
-                            tempBibRecord.Enabled[j] = enabled;
-                            break;
+                            param.Enabled = enabled;
                         }
-                        j++;
                     }
                 }
             }
@@ -282,35 +281,33 @@ namespace bibtex_management_system
         {
             ComboBox comboBox = sender as ComboBox;
 
-
-            int currentIndex = gridViewEntryDetail.CurrentCell.RowIndex - 2;
-
+            int currentIndex = gridViewEntryDetail.CurrentCell.RowIndex;
             if (currentIndex >= 0)
             {
+                string parameterName = gridViewEntryDetail[0, currentIndex].Value.ToString();
+                Parameter parameter;
                 BibTeXRecord record = bibRecordsCurrent.getRecordByID(listViewEntires.SelectedItems[0].Text);
-                bibEntryContent.setStyle(record.NameOfParameters[currentIndex], comboBox.Text);
-
-                changeStyle();
+                if (record.Parameters.TryGetValue(parameterName, out parameter))
+                {
+                    bibEntryContent.setStyle(parameter.Name, comboBox.Text);
+                    changeStyle();
+                }
             }
         }
 
-        void changeStyle()
+        void changeStyle(bool pForAll = false)
         {
             BibTeXRecord record = bibRecordsCurrent.getRecordByID(listViewEntires.SelectedItems[0].Text);
-
-            for (int i = 0; i < record.NameOfParameters.Count; i++)
+            for (int i = 0; i < record.Parameters.Count; i++)
             {
-                if (bibEntryContent.getStyle(record.NameOfParameters[i]) != "NONE")
+                Parameter parameter;
+                if (record.Parameters.TryGetValue(gridViewEntryDetail.Rows[i].Cells[0].Value.ToString(), out parameter)
+                    && ((pForAll && parameter.StyleName != "NONE") || (!pForAll && parameter.StyleChanged)))
                 {
-                    string changedText = styleInterpreter.getStyledText(styleCollection.getStyle(bibEntryContent.getStyle(record.NameOfParameters[i])), record.ValueOfParameters[i]);
-
-                    gridViewEntryDetail.Rows[i + 2].Cells[1].Value = changedText;
-                    record.ValueOfParameters[i] = changedText;
-                }
-                else
-                {
-                    gridViewEntryDetail.Rows[i + 2].Cells[1].Value = record.ValueOfParametersOrg[i];
-                    record.ValueOfParameters[i] = record.ValueOfParametersOrg[i];
+                    string changedText = styleInterpreter.getStyledText(styleCollection.getStyle(bibEntryContent.getStyle(parameter.Name)), parameter.Value);
+                    gridViewEntryDetail.Rows[i].Cells[1].Value = changedText;
+                    parameter.Value = changedText;
+                    parameter.StyleChanged = false;
                 }
             }
         }
