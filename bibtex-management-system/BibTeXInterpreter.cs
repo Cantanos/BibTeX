@@ -93,40 +93,5 @@ namespace bibtex_management_system
                 return pParameter = pParameter.Substring(pParameter.IndexOf('{') + 1, pParameter.LastIndexOf('}') - pParameter.IndexOf('{') - 1);
             }
         }
-
-        //List<string> readValuesOfParametersOfRecord(string toPrepare)
-        //{
-        //    toPrepare = toPrepare.Substring(toPrepare.IndexOf(","), toPrepare.LastIndexOf("}") - toPrepare.IndexOf(","));
-        //    List<string> result = new List<string>(toPrepare.Split('\n'));
-
-        //    for (int i = 0; i < result.Count; ++i)
-        //    {
-        //        result[i] = result[i].Trim().Replace("\r", "");
-        //        if (!result[i].Contains('=') && !result[i].Contains('}'))
-        //        {
-        //            result.RemoveAt(i);
-        //            i--;
-        //        }
-        //        else if (!result[i].Contains('=') && result[i].Contains('}'))
-        //        {
-        //            result[i - 1] += result[i];
-        //            result.RemoveAt(i);
-        //            i--;
-        //        }
-        //    }
-        //    for (int i = 0; i < result.Count; ++i)
-        //    {
-        //        if (result[i].IndexOf('{') == -1 || result[i].LastIndexOf('}') == -1)
-        //        {
-        //            result[i].Substring(result[i].IndexOf('=')).Trim();
-        //        }
-        //        else
-        //        {
-        //            result[i] = result[i].Substring(result[i].IndexOf('{') + 1, result[i].LastIndexOf('}') - result[i].IndexOf('{') - 1);
-        //        }
-        //    }
-
-        //    return result;
-        //}
     }
 }

@@ -19,7 +19,7 @@ namespace bibtex_management_system
             good = false;
 
             if (!checkXmlFileExist())
-                System.Windows.Forms.MessageBox.Show("File does not exist");
+                System.Windows.Forms.MessageBox.Show("File with styles does not exist");
             else if (!checkXmlLoadGood())
                 System.Windows.Forms.MessageBox.Show("Could not load xml file");
             else if (!checkXmlContent())
