@@ -37,7 +37,7 @@ namespace bibtex_management_system
         public string toString()
         {
             StringBuilder builder = new StringBuilder("@");
-            builder.Append(type).Append("{").Append(id).Append("}");
+            builder.Append(type).Append("{").Append(id).Append(",\n");
             builder.Append(String.Join(",\n", parameters.Values));
             builder.Append("}\n");
             return builder.ToString();
